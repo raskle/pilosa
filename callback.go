@@ -9,7 +9,7 @@ import (
 )
 
 func callbackResults(req *QueryRequest, resultsChan chan CallRes) {
-	resBatch := make([]interface{}, 1)
+	resBatch := make([]interface{}, 0)
 	for {
 		select {
 		case res, more := <-resultsChan:
@@ -18,11 +18,14 @@ func callbackResults(req *QueryRequest, resultsChan chan CallRes) {
 			}
 			resBatch = append(resBatch, res)
 		case <-time.After(time.Second * 2):
-			callCallback(resBatch, req) // TODO return and check for err to make sure
-			// callback endpoint is still alive only clear resBatch if callback
-			// successful - otherwise, buffer results up to a point, and if callback
-			// is still dead, give up
-			resBatch = make([]interface{}, 1)
+			if len(resBatch) > 0 {
+				callCallback(resBatch, req)
+				// TODO return and check for err to make sure
+				// callback endpoint is still alive only clear resBatch if callback
+				// successful - otherwise, buffer results up to a point, and if callback
+				// is still dead, give up
+				resBatch = make([]interface{}, 0)
+			}
 		}
 	}
 

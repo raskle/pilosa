@@ -390,12 +390,13 @@ func (h *Handler) readURLQueryRequest(r *http.Request) (*QueryRequest, error) {
 	}
 
 	return &QueryRequest{
-		DB:        q.Get("db"),
-		Query:     query,
-		Slices:    slices,
-		Profiles:  q.Get("profiles") == "true",
-		Timestamp: timestamp,
-		Quantum:   quantum,
+		DB:          q.Get("db"),
+		Query:       query,
+		Slices:      slices,
+		Profiles:    q.Get("profiles") == "true",
+		Timestamp:   timestamp,
+		Quantum:     quantum,
+		CallbackURL: q.Get("callbackURL"),
 	}, nil
 }
 
