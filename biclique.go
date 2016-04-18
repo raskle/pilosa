@@ -1,7 +1,5 @@
 package pilosa
 
-import "fmt"
-
 type Biclique struct {
 	Tiles []uint64
 	Count uint64 // number of profiles
@@ -32,13 +30,13 @@ func (f *Fragment) MaxBiclique(n int) chan Biclique {
 		topPairs = pairs[:n]
 	}
 
-	results := make(chan []BitmapPair, 100)
+	results := make(chan []BitmapPair, 0) // TODO tweak length for perf
 	go func() {
 		bicliqueFind(topPairs, nil, []BitmapPair{}, topPairs, []BitmapPair{}, results)
 		close(results)
 	}()
 
-	bicliques := make(chan Biclique, 100)
+	bicliques := make(chan Biclique, 0) // TODO tweak length for perf
 	// read results and convert each []BitmapPair to Biclique
 	go func() {
 		for bmPairs := range results {
@@ -53,36 +51,6 @@ func (f *Fragment) MaxBiclique(n int) chan Biclique {
 		close(bicliques)
 	}()
 	return bicliques
-}
-
-func maxBiclique(topPairs []BitmapPair) []Biclique {
-	// generate every permutation of topPairs
-	pairChan := make(chan []BitmapPair, 10)
-	ps := []BitmapPair(topPairs)
-	go generateCombinations(ps, pairChan)
-	var minCount uint64 = 1
-
-	results := make([]Biclique, 100)
-	i := 0
-
-	for comb := range pairChan {
-		fmt.Println("Got a combination! ", comb)
-		// feed each to intersectPairs
-		ret := intersectPairs(comb)
-		if ret.Count() > minCount {
-			tiles := getTileIDs(comb)
-			results[i] = Biclique{
-				Tiles: tiles,
-				Count: ret.Count(),
-				Score: uint64(len(tiles)) * ret.Count(),
-			}
-			i++
-			if i > 99 {
-				break
-			}
-		}
-	}
-	return results
 }
 
 func bicliqueFind(G []BitmapPair, L *Bitmap, R []BitmapPair, P []BitmapPair, Q []BitmapPair, results chan []BitmapPair) {
@@ -158,28 +126,6 @@ func getTileIDs(pairs []BitmapPair) []uint64 {
 		tileIDs[i] = pairs[i].ID
 	}
 	return tileIDs
-}
-
-func generateCombinations(pairs []BitmapPair, pairChan chan<- []BitmapPair) {
-	gcombs(pairs, pairChan)
-	close(pairChan)
-}
-
-func gcombs(pairs []BitmapPair, pairChan chan<- []BitmapPair) {
-	fmt.Println("gcombs, send to pairChan ", pairs)
-
-	pairChan <- pairs
-
-	if len(pairs) == 1 {
-		return
-	}
-	for i := 0; i < len(pairs); i++ {
-		pairscopy := make([]BitmapPair, len(pairs))
-		copy(pairscopy, pairs)
-		ps := append(pairscopy[:i], pairscopy[i+1:]...)
-
-		gcombs(ps, pairChan)
-	}
 }
 
 // intersectPairs generates a bitmap which represents all profiles which have all of the tiles in pairs

@@ -8,13 +8,19 @@ import (
 	"time"
 )
 
+var MAX_BATCH_SIZE = 20
+
 func callbackResults(req *QueryRequest, resultsChan chan CallRes) {
+	log.Println("CAllback results!")
 	resBatch := make([]interface{}, 0)
 	for {
 		select {
 		case res, more := <-resultsChan:
 			if !more {
-				break
+				if len(resBatch) > 0 {
+					callCallback(resBatch, req)
+				}
+				return
 			}
 			resBatch = append(resBatch, res)
 		case <-time.After(time.Second * 2):
@@ -27,6 +33,14 @@ func callbackResults(req *QueryRequest, resultsChan chan CallRes) {
 				resBatch = make([]interface{}, 0)
 			}
 		}
+		if len(resBatch) > MAX_BATCH_SIZE {
+			callCallback(resBatch, req)
+			// TODO return and check for err to make sure
+			// callback endpoint is still alive only clear resBatch if callback
+			// successful - otherwise, buffer results up to a point, and if callback
+			// is still dead, give up
+			resBatch = make([]interface{}, 0)
+		}
 	}
 
 }
@@ -38,6 +52,7 @@ func callCallback(resultBatch []interface{}, req *QueryRequest) {
 	if err != nil {
 		log.Printf("Error: %v, couldn't marshal resultBatch: %v", err, resultBatch)
 	}
+	log.Printf("POSTING encoded = %s", string(b.Bytes()))
 	resp, err := http.Post(req.CallbackURL, "application/json; charset=utf-8", &b)
 	if err != nil {
 		log.Printf("Error: %v, Couldn't post to callbackURL: %v", err, req.CallbackURL)

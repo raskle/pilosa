@@ -87,6 +87,8 @@ func (e *Executor) ExecuteAsync(db string, q *pql.Query, slices []uint64, opt *E
 		return nil, ErrDatabaseRequired
 	}
 
+	log.Printf("Executing async %v, %v, %v, %v", db, q, slices, opt)
+
 	// Default options.
 	if opt == nil {
 		opt = &ExecOptions{}
@@ -105,13 +107,12 @@ func (e *Executor) ExecuteAsync(db string, q *pql.Query, slices []uint64, opt *E
 		}
 	}
 
-	resultsChan := make(chan CallRes, 100)
+	resultsChan := make(chan CallRes, 0) // TODO tweak length for perf
 	go func() {
 		// Execute each call serially.
 		for _, call := range q.Calls {
 			switch c := call.(type) {
 			case *pql.Bicliques:
-				// TODO start getting results back and writing them to channel. executeAsyncBiclique
 				bcs := e.executeAsyncBiclique(db, c, slices, opt)
 				for bc := range bcs {
 					resultsChan <- CallRes{DB: db, Call: call, Result: bc}
@@ -326,9 +327,9 @@ func (e *Executor) executeAsyncBiclique(db string, c *pql.Bicliques, slices []ui
 	// TODO decide how we're going to aggregate results from multiple nodes/slices
 	// currently this just naively gets all the results and sends them back on the channel with no sorting or merging
 
-	results := make(chan Biclique, 100)
+	results := make(chan Biclique, 0) // TODO tweak length for perf
 
-	func() {
+	go func() {
 		for node, nodeSlices := range e.slicesByNode(slices) {
 			// Execute locally if the hostname matches.
 			if node.Host == e.Host {
@@ -337,6 +338,7 @@ func (e *Executor) executeAsyncBiclique(db string, c *pql.Bicliques, slices []ui
 					if err != nil {
 						// return nil, err
 						log.Println("Error (local) in executeAsyncBiclique: ", err)
+						continue
 					}
 					// results = Bicliques(results).Add(bc)
 					for bc := range bcs {
@@ -359,7 +361,6 @@ func (e *Executor) executeAsyncBiclique(db string, c *pql.Bicliques, slices []ui
 		}
 		close(results)
 	}()
-
 	return results
 }
 
@@ -737,7 +738,6 @@ func (e *Executor) executeBicliqueSlice(db string, c *pql.Bicliques, slice uint6
 	}
 	f := e.Index().Fragment(db, frame, slice)
 	if f == nil {
-		log.Println("return nil")
 		ch := make(chan Biclique, 0)
 		close(ch)
 		return ch, nil
