@@ -6,6 +6,27 @@ type Biclique struct {
 	Score uint64 // num tiles * Count
 }
 
+func (b Biclique) Equals(other Biclique) bool {
+	if b.Count != other.Count || b.Score != other.Score {
+		return false
+	}
+	if len(b.Tiles) != len(other.Tiles) {
+		return false
+	}
+	set := make(map[uint64]struct{})
+	for _, t := range b.Tiles {
+		set[t] = struct{}{}
+	}
+	for _, t := range other.Tiles {
+		_, ok := set[t]
+		if !ok {
+			return false
+		}
+		delete(set, t)
+	}
+	return true
+}
+
 type BCList []Biclique
 
 func (bcl BCList) Len() int {

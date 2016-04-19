@@ -7,8 +7,6 @@ import (
 	"reflect"
 	"testing"
 
-	"fmt"
-	"math/rand"
 	"sort"
 
 	"github.com/davecgh/go-spew/spew"
@@ -121,30 +119,25 @@ func TestFragment_maxBiclique(t *testing.T) {
 		if i != 5 {
 			f.MustSetBits(3, i)
 		}
-		f.MustSetBits(uint64(rand.Intn(8)), i)
-		f.MustSetBits(uint64(rand.Intn(8)), i)
-		f.MustSetBits(uint64(rand.Intn(8)), i)
-		f.MustSetBits(uint64(rand.Intn(8)), i)
-		f.MustSetBits(uint64(rand.Intn(8)), i)
-		f.MustSetBits(uint64(rand.Intn(8)), i)
 	}
 
-	ret := f.MaxBiclique(3)
+	ret := f.MaxBiclique(5)
 	retList := make(pilosa.BCList, 0)
 	for bc := range ret {
 		retList = append(retList, bc)
 	}
 	sort.Sort(retList)
-	fmt.Println("SWEET HOT RESULTS BELOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-	for i := 0; i < len(retList); i++ {
-		fmt.Println(retList[i])
-		if i > 5 {
-			break
+	expectedRetList := []pilosa.Biclique{
+		{Tiles: []uint64{3, 1}, Count: 5, Score: 10},
+		{Tiles: []uint64{3}, Count: 9, Score: 9},
+		{Tiles: []uint64{3, 2}, Count: 4, Score: 8},
+		{Tiles: []uint64{2}, Count: 5, Score: 5},
+	}
+	for i := 0; i < len(expectedRetList); i++ {
+		if !expectedRetList[i].Equals(retList[i]) {
+			t.Fatalf("Unexpected Result: %v, should be %v", retList, expectedRetList)
 		}
 	}
-	fmt.Println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!END SWEET HOT RESULTS")
-	// fmt.Println("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-	// spew.Dump(ret)
 
 }
 

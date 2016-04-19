@@ -11,7 +11,6 @@ import (
 var MAX_BATCH_SIZE = 20
 
 func callbackResults(req *QueryRequest, resultsChan chan CallRes) {
-	log.Println("CAllback results!")
 	resBatch := make([]interface{}, 0)
 	for {
 		select {
