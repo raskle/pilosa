@@ -841,6 +841,10 @@ func (p *Parser) parseBicliquesCall() (*Bicliques, error) {
 			if err := decodeInt(arg.value, &c.MinTiles); err != nil {
 				return nil, parseErrorf(pos, "minTiles: %s", err)
 			}
+		case 3, "minProfiles":
+			if err := decodeInt(arg.value, &c.MinProfiles); err != nil {
+				return nil, parseErrorf(pos, "minProfiles: %s", err)
+			}
 		}
 
 	}

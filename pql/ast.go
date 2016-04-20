@@ -369,11 +369,12 @@ func (c *Union) String() string {
 type Bicliques struct {
 	Frame string
 	// Maximum number of results to return.
-	N        int
-	MinTiles int
+	N           int
+	MinTiles    int
+	MinProfiles int
 }
 
 // String returns the string representation of the call.
 func (c *Bicliques) String() string {
-	return fmt.Sprintf("Bicliques(frame=%s,n=%d,minTiles=%d)", c.Frame, c.N, c.MinTiles)
+	return fmt.Sprintf("Bicliques(frame=%s,n=%d,minTiles=%d,minProfiles=%d)", c.Frame, c.N, c.MinTiles, c.MinProfiles)
 }

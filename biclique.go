@@ -96,6 +96,10 @@ func bicliqueFind(G []BitmapPair, L *Bitmap, R []BitmapPair, P []BitmapPair, Q [
 		}
 		newL = newL.Intersect(x.Bitmap)
 		newLcnt := newL.BitCount()
+		// Prune based on minProfiles
+		if int(newLcnt) < c.MinProfiles {
+			continue
+		}
 
 		// P' ← ∅; Q' ← ∅;
 		newP := []BitmapPair{}
