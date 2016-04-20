@@ -1,9 +1,10 @@
 package pilosa
 
 type Biclique struct {
-	Tiles []uint64
-	Count uint64 // number of profiles
-	Score uint64 // num tiles * Count
+	Tiles  []uint64
+	Bitmap *Bitmap
+	Count  uint64
+	Score  uint64
 }
 
 func (b Biclique) Equals(other Biclique) bool {
@@ -51,30 +52,16 @@ func (f *Fragment) MaxBiclique(n int) chan Biclique {
 		topPairs = pairs[:n]
 	}
 
-	results := make(chan []BitmapPair, 0) // TODO tweak length for perf
-	go func() {
-		bicliqueFind(topPairs, nil, []BitmapPair{}, topPairs, []BitmapPair{}, results)
-		close(results)
-	}()
-
 	bicliques := make(chan Biclique, 0) // TODO tweak length for perf
-	// read results and convert each []BitmapPair to Biclique
 	go func() {
-		for bmPairs := range results {
-			tiles := getTileIDs(bmPairs)
-			bicliqueBitmap := intersectPairs(bmPairs)
-			bicliques <- Biclique{
-				Tiles: tiles,
-				Count: bicliqueBitmap.Count(),
-				Score: uint64(len(tiles)) * bicliqueBitmap.Count(),
-			}
-		}
+		bicliqueFind(topPairs, nil, []BitmapPair{}, topPairs, []BitmapPair{}, bicliques)
 		close(bicliques)
 	}()
+
 	return bicliques
 }
 
-func bicliqueFind(G []BitmapPair, L *Bitmap, R []BitmapPair, P []BitmapPair, Q []BitmapPair, results chan []BitmapPair) {
+func bicliqueFind(G []BitmapPair, L *Bitmap, R []BitmapPair, P []BitmapPair, Q []BitmapPair, results chan Biclique) {
 	// G is topPairs
 	// L should start with all bits set (L == U) (it will actually start nil, and we'll special case it below)
 	// R starts empty
@@ -132,12 +119,25 @@ func bicliqueFind(G []BitmapPair, L *Bitmap, R []BitmapPair, P []BitmapPair, Q [
 				}
 			}
 			// report newR as maximal biclique
-			results <- newR
+			report(newR, results)
 			if len(newP) > 0 {
 				bicliqueFind(G, newL, newR, newP, newQ, results)
 			}
 		}
 		Q = append(Q, x)
+	}
+}
+
+func report(bmPairs []BitmapPair, results chan Biclique) {
+	tiles := getTileIDs(bmPairs)
+	bicliqueBitmap := intersectPairs(bmPairs)
+	count := bicliqueBitmap.BitCount()
+	bicliqueBitmap.SetCount(count)
+	results <- Biclique{
+		Tiles:  tiles,
+		Bitmap: bicliqueBitmap,
+		Count:  count,
+		Score:  count * uint64(len(tiles)),
 	}
 }
 

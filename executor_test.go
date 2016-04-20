@@ -5,6 +5,8 @@ import (
 	"strings"
 	"testing"
 
+	"sort"
+
 	"github.com/davecgh/go-spew/spew"
 	"github.com/umbel/pilosa"
 	"github.com/umbel/pilosa/pql"
@@ -177,9 +179,8 @@ func TestExecutor_Execute_SetBitmapAttrs(t *testing.T) {
 	}
 }
 
-func TestExecutor_Execute_Biclique(t *testing.T) {
+func genIdx() *Index {
 	idx := MustOpenIndex()
-	defer idx.Close()
 	// generate some bitmaps
 	for i := uint64(0); i < 11; i++ {
 		if i%2 == 0 {
@@ -192,35 +193,34 @@ func TestExecutor_Execute_Biclique(t *testing.T) {
 			idx.MustCreateFragmentIfNotExists("d", "f", 0).SetBit(3, i, nil, 0)
 		}
 	}
+	return idx
+}
+
+func TestExecutor_Execute_Biclique(t *testing.T) {
+	idx := genIdx()
+	defer idx.Close()
 	// Execute query.
 	e := NewExecutor(idx.Index, NewCluster(1))
-	if result, err := e.Execute("d", MustParse(`Bicliques(frame=f, n=3)`), nil, nil); err != nil {
+	result, err := e.Execute("d", MustParse(`Bicliques(frame=f, n=3)`), nil, nil)
+	if err != nil {
 		t.Fatal(err)
-	} else if !reflect.DeepEqual(result[0], []pilosa.Biclique{
+	}
+	expected := []pilosa.Biclique{
 		{Tiles: []uint64{3, 1}, Count: 6, Score: 12},
 		{Tiles: []uint64{3}, Count: 10, Score: 10},
 		{Tiles: []uint64{3, 2}, Count: 4, Score: 8},
 		{Tiles: []uint64{2}, Count: 5, Score: 5},
-	}) {
-		t.Fatalf("unexpected result: %s", spew.Sdump(result))
+	}
+	for i, bc := range result[0].([]pilosa.Biclique) {
+		if !expected[i].Equals(bc) {
+			t.Fatalf("expected %v, got %v", expected[i], bc)
+		}
 	}
 }
 
 func TestExecutor_Execute_BicliqueAsync(t *testing.T) {
-	idx := MustOpenIndex()
+	idx := genIdx()
 	defer idx.Close()
-	// generate some bitmaps
-	for i := uint64(0); i < 10; i++ {
-		if i%2 == 0 {
-			idx.MustCreateFragmentIfNotExists("d", "f", 0).SetBit(1, i, nil, 0)
-		}
-		if i%2 == 1 {
-			idx.MustCreateFragmentIfNotExists("d", "f", 0).SetBit(2, i, nil, 0)
-		}
-		if i != 5 {
-			idx.MustCreateFragmentIfNotExists("d", "f", 0).SetBit(3, i, nil, 0)
-		}
-	}
 	// Execute query.
 	e := NewExecutor(idx.Index, NewCluster(1))
 	resultChan, err := e.ExecuteAsync("d", MustParse(`Bicliques(frame=f, n=2)`), nil, nil)
@@ -231,11 +231,17 @@ func TestExecutor_Execute_BicliqueAsync(t *testing.T) {
 	for callRes := range resultChan {
 		results = append(results, callRes.Result.(pilosa.Biclique))
 	}
-	if !reflect.DeepEqual(results, []pilosa.Biclique{
-		{Tiles: []uint64{3}, Count: 9, Score: 9},
-		{Tiles: []uint64{3, 1}, Count: 5, Score: 10},
-	}) {
-		t.Fatalf("unexpected result: %s", spew.Sdump(results))
+	sort.Sort(pilosa.Bicliques(results))
+	expected := []pilosa.Biclique{
+		{Tiles: []uint64{3, 1}, Count: 6, Score: 12},
+		{Tiles: []uint64{3}, Count: 10, Score: 10},
+		{Tiles: []uint64{3, 2}, Count: 4, Score: 8},
+		{Tiles: []uint64{2}, Count: 5, Score: 5},
+	}
+	for i, result := range results {
+		if !expected[i].Equals(result) {
+			t.Fatalf("expected %v, got %v", expected[i], result)
+		}
 	}
 }
 

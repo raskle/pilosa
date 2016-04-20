@@ -53,7 +53,7 @@ func TestBicliqueFind(t *testing.T) {
 	bms[2].Bitmap.setBit(1)
 	bms[2].Bitmap.setBit(2)
 
-	results := make(chan []BitmapPair, 30)
+	results := make(chan Biclique, 30)
 	bicliqueFind(bms, nil, []BitmapPair{}, bms, []BitmapPair{}, results) // could block if too many results
 	close(results)
 
@@ -72,12 +72,7 @@ func TestBicliqueFind(t *testing.T) {
 	}
 }
 
-func newBicliqueResult(pairs []BitmapPair) bicliqueResult {
-	tileIDs := make([]uint64, len(pairs))
-	for i, bmp := range pairs {
-		tileIDs[i] = bmp.ID
-	}
-	bicliqueBitmap := intersectPairs(pairs)
-	bcr := bicliqueResult{Tiles: tileIDs, Profiles: bicliqueBitmap.Bits()}
+func newBicliqueResult(biclique Biclique) bicliqueResult {
+	bcr := bicliqueResult{Tiles: biclique.Tiles, Profiles: biclique.Bitmap.Bits()}
 	return bcr
 }
