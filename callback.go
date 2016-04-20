@@ -19,6 +19,7 @@ func callbackResults(req *QueryRequest, resultsChan chan CallRes) {
 				if len(resBatch) > 0 {
 					callCallback(resBatch, req)
 				}
+				log.Printf("Completed: %v", req)
 				return
 			}
 			resBatch = append(resBatch, res)

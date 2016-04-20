@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/umbel/pilosa/pql"
 	"github.com/yasushi-saito/rbtree"
 )
 
@@ -54,7 +55,7 @@ func TestBicliqueFind(t *testing.T) {
 	bms[2].Bitmap.setBit(2)
 
 	results := make(chan Biclique, 30)
-	bicliqueFind(bms, nil, []BitmapPair{}, bms, []BitmapPair{}, results) // could block if too many results
+	bicliqueFind(bms, nil, []BitmapPair{}, bms, []BitmapPair{}, &pql.Bicliques{}, results) // could block if too many results
 	close(results)
 
 	expectedBicliques := []bicliqueResult{

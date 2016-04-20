@@ -1,6 +1,10 @@
 package pilosa
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/umbel/pilosa/pql"
+)
 
 type Biclique struct {
 	Tiles  []uint64
@@ -47,7 +51,8 @@ func (bcl BCList) Swap(i, j int) {
 	bcl[i], bcl[j] = bcl[j], bcl[i]
 }
 
-func (f *Fragment) MaxBiclique(n int) chan Biclique {
+func (f *Fragment) MaxBiclique(c *pql.Bicliques) chan Biclique {
+	n := c.N
 	f.mu.Lock()
 	f.cache.Invalidate()
 	pairs := f.cache.Top() // slice of bitmapPairs
@@ -60,14 +65,14 @@ func (f *Fragment) MaxBiclique(n int) chan Biclique {
 
 	bicliques := make(chan Biclique, 0) // TODO tweak length for perf
 	go func() {
-		bicliqueFind(topPairs, nil, []BitmapPair{}, topPairs, []BitmapPair{}, bicliques)
+		bicliqueFind(topPairs, nil, []BitmapPair{}, topPairs, []BitmapPair{}, c, bicliques)
 		close(bicliques)
 	}()
 
 	return bicliques
 }
 
-func bicliqueFind(G []BitmapPair, L *Bitmap, R []BitmapPair, P []BitmapPair, Q []BitmapPair, results chan Biclique) {
+func bicliqueFind(G []BitmapPair, L *Bitmap, R []BitmapPair, P []BitmapPair, Q []BitmapPair, c *pql.Bicliques, results chan Biclique) {
 	// G is topPairs
 	// L should start with all bits set (L == U) (it will actually start nil, and we'll special case it below)
 	// R starts empty
@@ -125,17 +130,20 @@ func bicliqueFind(G []BitmapPair, L *Bitmap, R []BitmapPair, P []BitmapPair, Q [
 				}
 			}
 			// report newR as maximal biclique
-			report(newR, results)
+			report(newR, c, results)
 			if len(newP) > 0 {
-				bicliqueFind(G, newL, newR, newP, newQ, results)
+				bicliqueFind(G, newL, newR, newP, newQ, c, results)
 			}
 		}
 		Q = append(Q, x)
 	}
 }
 
-func report(bmPairs []BitmapPair, results chan Biclique) {
+func report(bmPairs []BitmapPair, c *pql.Bicliques, results chan Biclique) {
 	tiles := getTileIDs(bmPairs)
+	if len(tiles) < c.MinTiles {
+		return
+	}
 	bicliqueBitmap := intersectPairs(bmPairs)
 	count := bicliqueBitmap.BitCount()
 	bicliqueBitmap.SetCount(count)

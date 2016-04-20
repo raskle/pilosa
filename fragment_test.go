@@ -11,6 +11,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/umbel/pilosa"
+	"github.com/umbel/pilosa/pql"
 )
 
 // SliceWidth is a helper reference to use when testing.
@@ -121,7 +122,7 @@ func TestFragment_maxBiclique(t *testing.T) {
 		}
 	}
 
-	ret := f.MaxBiclique(5)
+	ret := f.MaxBiclique(&pql.Bicliques{N: 5})
 	retList := make(pilosa.BCList, 0)
 	for bc := range ret {
 		retList = append(retList, bc)

@@ -366,7 +366,7 @@ func TestParser_Parse_Bicliques(t *testing.T) {
 		t.Fatalf("unexpected query: %s", spew.Sdump(q))
 	}
 
-	if s := q.String(); s != `Bicliques(frame=f,n=2)` {
+	if s := q.String(); s != `Bicliques(frame=f,n=2,minTiles=0)` {
 		t.Fatalf("unexpected string encoding: %s", s)
 	}
 }

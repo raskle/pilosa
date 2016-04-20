@@ -295,10 +295,7 @@ func (e *Executor) executeBiclique(db string, c *pql.Bicliques, slices []uint64,
 		// Execute locally if the hostname matches.
 		if node.Host == e.Host {
 			for _, slice := range nodeSlices {
-				bcChan, err := e.executeBicliqueSlice(db, c, slice)
-				if err != nil {
-					return nil, err
-				}
+				bcChan := e.executeBicliqueSlice(db, c, slice)
 				bcs := make([]Biclique, 0)
 				for b := range bcChan {
 					bcs = append(bcs, b)
@@ -335,12 +332,7 @@ func (e *Executor) executeAsyncBiclique(db string, c *pql.Bicliques, slices []ui
 			// Execute locally if the hostname matches.
 			if node.Host == e.Host {
 				for _, slice := range nodeSlices {
-					bcs, err := e.executeBicliqueSlice(db, c, slice)
-					if err != nil {
-						// return nil, err
-						log.Println("Error (local) in executeAsyncBiclique: ", err)
-						continue
-					}
+					bcs := e.executeBicliqueSlice(db, c, slice)
 					// results = Bicliques(results).Add(bc)
 					for bc := range bcs {
 						label := makeLabel(bc.Tiles)
@@ -735,7 +727,7 @@ func decodeError(s string) error {
 	return errors.New(s)
 }
 
-func (e *Executor) executeBicliqueSlice(db string, c *pql.Bicliques, slice uint64) (chan Biclique, error) {
+func (e *Executor) executeBicliqueSlice(db string, c *pql.Bicliques, slice uint64) chan Biclique {
 	// Retrieve bitmap used to intersect.
 	frame := c.Frame
 	if frame == "" {
@@ -745,8 +737,8 @@ func (e *Executor) executeBicliqueSlice(db string, c *pql.Bicliques, slice uint6
 	if f == nil {
 		ch := make(chan Biclique, 0)
 		close(ch)
-		return ch, nil
+		return ch
 	}
 
-	return f.MaxBiclique(c.N), nil // TODO make this take a channel?
+	return f.MaxBiclique(c)
 }
