@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-var MAX_BATCH_SIZE = 20
+var MAX_BATCH_SIZE = 200
 
 func callbackResults(req *QueryRequest, resultsChan chan CallRes) {
 	resBatch := make([]interface{}, 0)

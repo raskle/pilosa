@@ -1,8 +1,10 @@
 package pilosa
 
+import "fmt"
+
 type Biclique struct {
 	Tiles  []uint64
-	Bitmap *Bitmap
+	Bitmap *Bitmap `json:"-"`
 	Count  uint64
 	Score  uint64
 }
@@ -26,6 +28,10 @@ func (b Biclique) Equals(other Biclique) bool {
 		delete(set, t)
 	}
 	return true
+}
+
+func (b Biclique) String() string {
+	return fmt.Sprintf("{Tiles: %v, Count: %v, Score: %v}", b.Tiles, b.Count, b.Score)
 }
 
 type BCList []Biclique

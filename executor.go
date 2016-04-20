@@ -330,6 +330,7 @@ func (e *Executor) executeAsyncBiclique(db string, c *pql.Bicliques, slices []ui
 	results := make(chan Biclique, 0) // TODO tweak length for perf
 
 	go func() {
+		seenBicliques := make(map[uint64]struct{})
 		for node, nodeSlices := range e.slicesByNode(slices) {
 			// Execute locally if the hostname matches.
 			if node.Host == e.Host {
@@ -342,7 +343,11 @@ func (e *Executor) executeAsyncBiclique(db string, c *pql.Bicliques, slices []ui
 					}
 					// results = Bicliques(results).Add(bc)
 					for bc := range bcs {
-						results <- bc
+						label := makeLabel(bc.Tiles)
+						if _, ok := seenBicliques[label]; !ok {
+							results <- bc
+							seenBicliques[label] = struct{}{}
+						}
 					}
 				}
 				continue

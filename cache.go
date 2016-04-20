@@ -271,6 +271,7 @@ func makeLabel(ar []uint64) (r uint64) {
 	}
 	return
 }
+
 func (p Bicliques) Add(other []Biclique) []Biclique {
 
 	m := make(map[uint64]Biclique, len(p))
