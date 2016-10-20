@@ -69,7 +69,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Route API calls to appropriate handler functions.
-	t := time.Now()
+	//t := time.Now()
 	switch r.URL.Path {
 	case "/schema":
 		switch r.Method {
@@ -173,7 +173,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 	}
 
-	h.logger().Printf("%s %s %.03fs", r.Method, r.URL.String(), time.Since(t).Seconds())
+	//	h.logger().Printf("%s %s %.03fs", r.Method, r.URL.String(), time.Since(t).Seconds())
 }
 
 // handleGetSchema handles GET /schema requests.

@@ -48,7 +48,7 @@ const (
 
 const (
 	// DefaultFragmentMaxOpN is the default value for Fragment.MaxOpN.
-	DefaultFragmentMaxOpN = 1000
+	DefaultFragmentMaxOpN = 10000
 )
 
 // Fragment represents the intersection of a frame and slice in a database.

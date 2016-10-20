@@ -7,7 +7,10 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
+	"os"
+	"runtime"
 	"sort"
+	"time"
 	"unsafe"
 )
 
@@ -1005,14 +1008,36 @@ func (c *container) WriteTo(w io.Writer) (n int64, err error) {
 	return c.bitmapWriteTo(w)
 }
 
+func dumpStack(prefix string) {
+	pid := os.Getpid()
+	fname := fmt.Sprintf("%s.%d", prefix, pid)
+	datestamp := time.Now()
+	f, _ := os.OpenFile(fname, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+	datestampstring := datestamp.String()
+	datestampstring = datestampstring[0:10] + " "
+	f.WriteString(datestampstring)
+	trace := make([]byte, 4096)
+	runtime.Stack(trace, false)
+	f.Write(trace)
+	f.WriteString("\n")
+	f.Close()
+
+}
 func (c *container) arrayWriteTo(w io.Writer) (n int64, err error) {
-	nn, err := w.Write((*[0xFFFFFFF]byte)(unsafe.Pointer(&c.array[0]))[:4*c.n])
-	return int64(nn), err
+	if len(c.array) > 0 { //&& len(c.array[0])>4*c.n{
+		nn, err := w.Write((*[0xFFFFFFF]byte)(unsafe.Pointer(&c.array[0]))[:4*c.n])
+		return int64(nn), err
+	}
+	dumpStack("containerArrayOOB")
+	return int64(0), errors.New(fmt.Sprintf("containerArray out of bounds:%d", c.n))
 }
 
 func (c *container) bitmapWriteTo(w io.Writer) (n int64, err error) {
-	nn, err := w.Write((*[0xFFFFFFF]byte)(unsafe.Pointer(&c.bitmap[0]))[:(8 * bitmapN)])
-	return int64(nn), err
+	if len(c.bitmap) > 0 { //&& len(c.array[0])>=8*bitmapN{
+		nn, err := w.Write((*[0xFFFFFFF]byte)(unsafe.Pointer(&c.bitmap[0]))[:(8 * bitmapN)])
+		return int64(nn), err
+	}
+	return int64(0), errors.New(fmt.Sprintf("bitmapArray out of bounds %d", bitmapN))
 }
 
 // size returns the encoded size of the container, in bytes.
