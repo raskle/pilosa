@@ -1303,8 +1303,8 @@ func (cmd *BagentCommand) ParseFlags(args []string) error {
 		switch remArgs[0] {
 		case "-help", "-h":
 			return flag.ErrHelp
-		case "SetBits":
-			bm = &bench.SetBits{}
+		case "DiagonalSetBits":
+			bm = &bench.DiagonalSetBits{}
 		default:
 			return fmt.Errorf("Unknown benchmark cmd: %v", remArgs[0])
 		}
@@ -1341,7 +1341,7 @@ The following arguments are available:
 		An integer differentiating this agent from others in the fleet.
 
 	subcommands:
-		SetBits
+		DiagonalSetBits
 `)
 }
 
