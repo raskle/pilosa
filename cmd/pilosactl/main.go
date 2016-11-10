@@ -1259,7 +1259,7 @@ func (cmd *CreateCommand) Run() error {
 
 // BagentCommand represents a command for creating a pilosa cluster.
 type BagentCommand struct {
-	Benchmarks []bench.Benchmarker
+	Benchmarks []bench.Benchmark
 	AgentNum   int
 	Hosts      []string
 
@@ -1271,7 +1271,7 @@ type BagentCommand struct {
 // NewBagentCommand returns a new instance of BagentCommand.
 func NewBagentCommand(stdin io.Reader, stdout, stderr io.Writer) *BagentCommand {
 	return &BagentCommand{
-		Benchmarks: []bench.Benchmarker{},
+		Benchmarks: []bench.Benchmark{},
 		Hosts:      []string{},
 		AgentNum:   0,
 
@@ -1298,13 +1298,13 @@ func (cmd *BagentCommand) ParseFlags(args []string) error {
 		return flag.ErrHelp
 	}
 	for len(remArgs) > 0 {
-		var bm bench.BenchmarkCmd
+		var bm bench.Command
 		var err error
 		switch remArgs[0] {
 		case "-help", "-h":
 			return flag.ErrHelp
-		case "SetBitBenchmark":
-			bm = &bench.SetBitBenchmark{}
+		case "SetBits":
+			bm = &bench.SetBits{}
 		default:
 			return fmt.Errorf("Unknown benchmark cmd: %v", remArgs[0])
 		}
@@ -1341,7 +1341,7 @@ The following arguments are available:
 		An integer differentiating this agent from others in the fleet.
 
 	subcommands:
-		SetBitBenchmark
+		SetBits
 `)
 }
 
