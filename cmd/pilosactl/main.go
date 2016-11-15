@@ -22,6 +22,7 @@ import (
 	"time"
 	"unsafe"
 
+	"context"
 	"encoding/json"
 	"github.com/umbel/pilosa"
 	"github.com/umbel/pilosa/bench"
@@ -395,7 +396,7 @@ func (cmd *ImportCommand) importBits(bits []pilosa.Bit) error {
 	// Parse path into bits.
 	for slice, bits := range bitsBySlice {
 		logger.Printf("importing slice: %d, n=%d", slice, len(bits))
-		if err := cmd.Client.Import(cmd.Database, cmd.Frame, slice, bits); err != nil {
+		if err := cmd.Client.Import(context.TODO(), cmd.Database, cmd.Frame, slice, bits); err != nil {
 			return err
 		}
 	}
@@ -492,7 +493,7 @@ func (cmd *ExportCommand) Run() error {
 	}
 
 	// Determine slice count.
-	sliceN, err := client.SliceN()
+	sliceN, err := client.SliceN(context.TODO())
 	if err != nil {
 		return err
 	}
@@ -500,7 +501,7 @@ func (cmd *ExportCommand) Run() error {
 	// Export each slice.
 	for slice := uint64(0); slice <= sliceN; slice++ {
 		logger.Printf("exporting slice: %d", slice)
-		if err := client.ExportCSV(cmd.Database, cmd.Frame, slice, w); err != nil {
+		if err := client.ExportCSV(context.TODO(), cmd.Database, cmd.Frame, slice, w); err != nil {
 			return err
 		}
 	}
@@ -693,7 +694,7 @@ func (cmd *BackupCommand) Run() error {
 	defer f.Close()
 
 	// Begin streaming backup.
-	if err := client.BackupTo(f, cmd.Database, cmd.Frame); err != nil {
+	if err := client.BackupTo(context.TODO(), f, cmd.Database, cmd.Frame); err != nil {
 		return err
 	}
 
@@ -786,7 +787,7 @@ func (cmd *RestoreCommand) Run() error {
 	defer f.Close()
 
 	// Restore backup file to the cluster.
-	if err := client.RestoreFrom(f, cmd.Database, cmd.Frame); err != nil {
+	if err := client.RestoreFrom(context.TODO(), f, cmd.Database, cmd.Frame); err != nil {
 		return err
 	}
 
@@ -1147,7 +1148,7 @@ func (cmd *BenchCommand) runSetBit(client *pilosa.Client) error {
 
 		q := fmt.Sprintf(`SetBit(id=%d, frame="%s", profileID=%d)`, bitmapID, cmd.Frame, profileID)
 
-		if _, err := client.ExecuteQuery(cmd.Database, q, true); err != nil {
+		if _, err := client.ExecuteQuery(context.TODO(), cmd.Database, q, true); err != nil {
 			return err
 		}
 	}
