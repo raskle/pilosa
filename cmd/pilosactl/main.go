@@ -1318,6 +1318,8 @@ func (cmd *BagentCommand) ParseFlags(args []string) error {
 			bm = &bench.DiagonalSetBits{}
 		case "RandomSetBits":
 			bm = &bench.RandomSetBits{}
+		case "MultiDBSetBits":
+			bm = &bench.MultiDBSetBits{}
 		default:
 			return fmt.Errorf("Unknown benchmark cmd: %v", remArgs[0])
 		}
@@ -1356,6 +1358,8 @@ The following arguments are available:
 	subcommands:
 		DiagonalSetBits
 		RandomSetBits
+		MultiDBSetBits
+
 
 `)
 }
@@ -1367,7 +1371,7 @@ func (cmd *BagentCommand) Run() error {
 	if err != nil {
 		return fmt.Errorf("in cmd.Run initialization: %v", err)
 	}
-	fmt.Fprintf(cmd.Stderr, "cmd: %v\n", *cmd)
+
 	res := sbm.Run(cmd.AgentNum)
 	fmt.Fprintln(cmd.Stdout, res)
 	return nil
@@ -1420,7 +1424,6 @@ func (cmd *BspawnCommand) ParseFlags(args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Fprintf(cmd.Stderr, "%v", cmd)
 
 	// handle pilosa creation
 	// handle agent creation
@@ -1443,7 +1446,6 @@ pilosactl spawn configfile
 func (cmd *BspawnCommand) Run() error {
 	switch cmd.Agents.Type {
 	case "local":
-		fmt.Fprintf(cmd.Stderr, "running! local\n")
 		return cmd.spawnLocal()
 	case "remote":
 		return fmt.Errorf("remote type spawning is unimplemented")
@@ -1465,7 +1467,7 @@ func (cmd *BspawnCommand) spawnLocal() error {
 		}
 	}
 	errors := make([]error, len(agents))
-	fmt.Fprintf(cmd.Stderr, "agents: %v\n", agents)
+
 	wg := sync.WaitGroup{}
 	for i, agent := range agents {
 		wg.Add(1)
