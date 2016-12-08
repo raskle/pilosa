@@ -1224,6 +1224,7 @@ func (cmd *BagentCommand) Run(ctx context.Context) error {
 	}
 
 	res := sbm.Run(ctx, cmd.AgentNum)
+	bench.WriteResultToDb(res, sbm)
 	enc := json.NewEncoder(cmd.Stdout)
 	enc.SetIndent("", "  ")
 	err = enc.Encode(res)
