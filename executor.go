@@ -277,7 +277,7 @@ func (e *Executor) executeTopNSlice(ctx context.Context, db string, c *pql.Call,
 		frame = DefaultFrame
 	}
 
-	f := e.Index.Fragment(db, frame, slice)
+	f := e.Index.Fragment(db, frame, ViewStandard, slice)
 	if f == nil {
 		return nil, nil
 	}
@@ -330,7 +330,7 @@ func (e *Executor) executeBitmapSlice(ctx context.Context, db string, c *pql.Cal
 		return nil, fmt.Errorf("Bitmap() field required: %s", rowLabel)
 	}
 
-	frag := e.Index.Fragment(db, frame, slice)
+	frag := e.Index.Fragment(db, frame, ViewStandard, slice)
 	if frag == nil {
 		return NewBitmap(), nil
 	}
@@ -405,8 +405,8 @@ func (e *Executor) executeRangeSlice(ctx context.Context, db string, c *pql.Call
 
 	// Union bitmaps across all time-based subframes.
 	bm := &Bitmap{}
-	for _, subframe := range FramesByTimeRange(frame, startTime, endTime, q) {
-		f := e.Index.Fragment(db, subframe, slice)
+	for _, view := range ViewsByTimeRange(ViewStandard, startTime, endTime, q) {
+		f := e.Index.Fragment(db, frame, view, slice)
 		if f == nil {
 			continue
 		}
@@ -509,12 +509,7 @@ func (e *Executor) executeClearBit(ctx context.Context, db string, c *pql.Call, 
 	for _, node := range e.Cluster.FragmentNodes(db, slice) {
 		// Update locally if host matches.
 		if node.Host == e.Host {
-			frag := e.Index.Fragment(db, frame, slice)
-			if frag == nil {
-				return false, nil
-			}
-
-			val, err := frag.ClearBit(rowID, colID)
+			val, err := f.ClearBit(rowID, colID, nil)
 			if err != nil {
 				return false, err
 			} else if val {
@@ -585,12 +580,7 @@ func (e *Executor) executeSetBit(ctx context.Context, db string, c *pql.Call, op
 	for _, node := range e.Cluster.FragmentNodes(db, slice) {
 		// Update locally if host matches.
 		if node.Host == e.Host {
-			d := e.Index.DB(db)
-			if d == nil {
-				return false, ErrDatabaseNotFound
-			}
-
-			val, err := d.SetBit(frame, rowID, colID, timestamp)
+			val, err := f.SetBit(rowID, colID, timestamp)
 			if err != nil {
 				return false, err
 			} else if val {
