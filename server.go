@@ -182,8 +182,6 @@ func (s *Server) monitorAntiEntropy() {
 	t := time.Now()
 	ticker := time.NewTicker(s.AntiEntropyInterval)
 	defer ticker.Stop()
-	dif := time.Since(t)
-	s.Index.Stats.Histogram("AntiEntropyDuration", float64(dif))
 
 	s.logger().Printf("index sync monitor initializing (%s interval)", s.AntiEntropyInterval)
 
@@ -215,8 +213,8 @@ func (s *Server) monitorAntiEntropy() {
 		// Record successful sync in log.
 		s.logger().Printf("index sync complete")
 	}
-	//dif := time.Since(t)
-	//s.Index.Stats.Histogram("AntiEntropyDuration", float64(dif))
+	dif := time.Since(t)
+	s.Index.Stats.Histogram("AntiEntropyDuration", float64(dif))
 }
 
 // monitorMaxSlices periodically pulls the highest slice from each node in the cluster.

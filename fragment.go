@@ -1379,12 +1379,11 @@ func (s *FragmentSyncer) SyncFragment() error {
 		if byteSlicesEqual(checksums) {
 			continue
 		}
-		s.Fragment.stats.Count("BlockRepair", 1)
-
 		// Synchronize block.
 		if err := s.syncBlock(blockID); err != nil {
 			return fmt.Errorf("sync block: id=%d, err=%s", blockID, err)
 		}
+		s.Fragment.stats.Count("BlockRepair", 1)
 	}
 
 	return nil
