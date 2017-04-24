@@ -117,7 +117,6 @@ func (h *Handler) handleGetSchema(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) handleGetStatus(w http.ResponseWriter, r *http.Request) {
 	// Compute my local state
-	fmt.Println("Call interface")
 	h.ServerHandler.LocalState()
 
 	if err := json.NewEncoder(w).Encode(getStatusResponse{
