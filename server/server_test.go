@@ -379,11 +379,19 @@ func TestMain_SendReceiveMessage(t *testing.T) {
 	m1 := MustRunMain()
 	defer m1.Close()
 
+	// Expected indexes and Frames
+	expected := map[string][]string{
+		"i": []string{"f"},
+	}
+
 	// Get available ports for internal messaging
 	freePorts, err := availablePorts(2)
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	m0.Server.LogOutput = os.Stderr
+	m1.Server.LogOutput = os.Stderr
 
 	// Update cluster config
 	m0.Server.Cluster.Nodes = []*pilosa.Node{
@@ -418,11 +426,6 @@ func TestMain_SendReceiveMessage(t *testing.T) {
 	}
 	if err := m1.Server.BroadcastReceiver.Start(m1.Server); err != nil {
 		t.Fatal(err)
-	}
-
-	// Expected indexes and Frames
-	expected := map[string][]string{
-		"i": []string{"f"},
 	}
 
 	// Create a client for each node.
