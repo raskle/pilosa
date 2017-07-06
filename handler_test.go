@@ -1422,7 +1422,7 @@ func TestInput_JSON(t *testing.T) {
 				"distanceMiles": 8,
 				"time_value": 12345
 				}]`,
-			err: "set-timestamp value must be in time format: YYYY-MM-DD, having: 12345"},
+			err: "set-timestamp value must be in time format: YYYY-MM-DD, has: 12345"},
 	}
 	h := test.NewHandler()
 	h.Holder = hldr.Holder
@@ -1445,4 +1445,32 @@ func EncodeInputDef(name string, body []byte) (*internal.InputDefinition, error)
 	def := req.Encode()
 	def.Name = name
 	return def, nil
+}
+
+func TestHandler_GetTimeStamp(t *testing.T) {
+	data := make(map[string]interface{})
+	timeField := "time"
+	data["time"] = "2017-03-20T19:35"
+	val, err := pilosa.GetTimeStamp(data, timeField)
+	if val != 1490038500 {
+		t.Fatalf("Timestamp is not set correctly for %s", data["time"])
+	}
+
+	data["int"] = 1490000000
+	val, err = pilosa.GetTimeStamp(data, "int")
+
+	if !strings.Contains(err.Error(), "set-timestamp value must be in time format") {
+		t.Fatalf("Expected set-timestamp value must be in time format error, actual error: %s", err)
+	}
+
+	data["time"] = "03-2017-20T19:35"
+	val, err = pilosa.GetTimeStamp(data, timeField)
+	if !strings.Contains(err.Error(), "cannot parse") {
+		t.Fatalf("Expected Timestamp is not set correctly, actual error: %s", err)
+	}
+
+	val, err = pilosa.GetTimeStamp(data, "test")
+	if val != 0 {
+		t.Fatalf("Expected Ignore nonexistent fields")
+	}
 }
