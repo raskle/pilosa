@@ -1456,19 +1456,21 @@ func TestHandler_GetTimeStamp(t *testing.T) {
 		t.Fatalf("Timestamp is not set correctly for %s", data["time"])
 	}
 
+	// Verify that an integer is not a valid time format.
 	data["int"] = 1490000000
 	val, err = pilosa.GetTimeStamp(data, "int")
-
 	if !strings.Contains(err.Error(), "set-timestamp value must be in time format") {
 		t.Fatalf("Expected set-timestamp value must be in time format error, actual error: %s", err)
 	}
 
+	// Verify reversing month and year is not valid time format.
 	data["time"] = "03-2017-20T19:35"
 	val, err = pilosa.GetTimeStamp(data, timeField)
 	if !strings.Contains(err.Error(), "cannot parse") {
 		t.Fatalf("Expected Timestamp is not set correctly, actual error: %s", err)
 	}
 
+	// Handle time fields that do not exist.
 	val, err = pilosa.GetTimeStamp(data, "test")
 	if val != 0 {
 		t.Fatalf("Expected Ignore nonexistent fields")
