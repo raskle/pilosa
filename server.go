@@ -123,7 +123,7 @@ func (s *Server) Open() error {
 	}
 
 	for i, n := range s.Cluster.Nodes {
-		if s.Cluster.NodeByHost(n.Host) != nil {
+		if n.Host == s.Host {
 			s.Holder.Stats = s.Holder.Stats.WithTags(fmt.Sprintf("NodeID:%d", i))
 		}
 	}
